@@ -37,7 +37,7 @@ export function Header() {
           <div className="flex items-center justify-between h-24 md:h-28">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-4 group">
-              <div className="w-22 h-18 md:w-32 md:h-28 transition-transform group-hover:scale-105">
+              <div className="w-20 h-18 md:w-32 md:h-28 transition-transform group-hover:scale-105">
                 <Logo />
               </div>
               <div>

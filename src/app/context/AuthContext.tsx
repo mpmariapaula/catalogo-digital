@@ -1,46 +1,92 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import { apiRequest } from '../services/api';
+import { appEnv } from '../config/env';
+
+interface AdminUser {
+  id: string;
+  email: string;
+}
+
+interface LoginResponse {
+  token: string;
+  admin: AdminUser;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
+  isLoading: boolean;
+  admin: AdminUser | null;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Senha simples - em produção, usar backend real
-const ADMIN_PASSWORD = 'Velozes20!';
+const STORAGE_KEYS = {
+  TOKEN: 'admin_token',
+  USER: 'admin_user',
+  LEGACY_AUTH: 'admin_auth'
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
 
   useEffect(() => {
-    // Verificar se já está autenticado no localStorage
-    const auth = localStorage.getItem('admin_auth');
-    if (auth === 'true') {
+    const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+    const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
+
+    if (token) {
       setIsAuthenticated(true);
+      if (storedUser) {
+        try {
+          setAdmin(JSON.parse(storedUser) as AdminUser);
+        } catch {
+          localStorage.removeItem(STORAGE_KEYS.USER);
+        }
+      }
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.LEGACY_AUTH);
     }
+
+    setIsLoading(false);
   }, []);
 
-  const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      localStorage.setItem('admin_auth', 'true');
-      return true;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    if (!appEnv.useApi) {
+      return false;
     }
-    return false;
+
+    const payload = await apiRequest<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+
+    localStorage.setItem(STORAGE_KEYS.TOKEN, payload.token);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(payload.admin));
+    localStorage.removeItem(STORAGE_KEYS.LEGACY_AUTH);
+
+    setAdmin(payload.admin);
+    setIsAuthenticated(true);
+
+    return true;
   };
 
   const logout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('admin_auth');
+    setAdmin(null);
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.LEGACY_AUTH);
   };
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({ isAuthenticated, isLoading, admin, login, logout }),
+    [admin, isAuthenticated, isLoading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

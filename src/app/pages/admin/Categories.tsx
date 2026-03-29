@@ -11,10 +11,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 
 export function Categories() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useData();
+  const { categories, addCategory, updateCategory, deleteCategory, isLoading } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', order: '' });
 
   const handleOpenDialog = (category?: Category) => {
@@ -33,7 +34,7 @@ export function Categories() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.slug.trim()) {
       toast.error('Nome e slug são obrigatórios');
@@ -44,24 +45,35 @@ export function Categories() {
       name: formData.name.trim(),
       slug: formData.slug.trim().toLowerCase(),
       description: formData.description.trim(),
-      order: parseInt(formData.order) || 0
+      order: parseInt(formData.order, 10) || 0
     };
 
-    if (editingCategory) {
-      updateCategory(editingCategory.id, categoryData);
-      toast.success('Categoria atualizada!');
-    } else {
-      addCategory(categoryData);
-      toast.success('Categoria criada!');
+    setIsSubmitting(true);
+    try {
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, categoryData);
+        toast.success('Categoria atualizada!');
+      } else {
+        await addCategory(categoryData);
+        toast.success('Categoria criada!');
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar a categoria.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDialogOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (deletingCategory) {
-      deleteCategory(deletingCategory.id);
+  const confirmDelete = async () => {
+    if (!deletingCategory) return;
+
+    try {
+      await deleteCategory(deletingCategory.id);
       toast.success('Categoria excluída!');
       setDeletingCategory(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível excluir a categoria.');
     }
   };
 
@@ -78,29 +90,33 @@ export function Categories() {
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories.sort((a, b) => a.order - b.order).map((category) => (
-          <Card key={category.id}>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-lg text-gray-900">{category.name}</h3>
-                  <p className="text-xs text-gray-500">/{category.slug}</p>
+      {isLoading ? (
+        <div className="bg-white border rounded-lg p-10 text-center text-gray-500">Carregando categorias...</div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...categories].sort((a, b) => a.order - b.order).map((category) => (
+            <Card key={category.id}>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-lg text-gray-900">{category.name}</h3>
+                    <p className="text-xs text-gray-500">/{category.slug}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(category)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeletingCategory(category)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(category)}>
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setDeletingCategory(category)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              {category.description && <p className="text-sm text-gray-600">{category.description}</p>}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                {category.description && <p className="text-sm text-gray-600">{category.description}</p>}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -126,7 +142,9 @@ export function Categories() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90">Salvar</Button>
+              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90" disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : 'Salvar'}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

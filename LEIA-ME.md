@@ -209,3 +209,29 @@ Para dúvidas ou problemas:
 ---
 
 **Desenvolvido com React, TypeScript, Tailwind CSS e Motion** 🚀
+
+
+## Backend para produção
+
+Foi adicionada uma pasta `backend/` com a base de produção do projeto, incluindo:
+
+- autenticação JWT
+- CRUD de categorias
+- CRUD de subcategorias
+- CRUD de produtos
+- CRUD de banners
+- upload local de imagens
+- Prisma + PostgreSQL
+
+### Variáveis do frontend
+
+Crie um arquivo `.env` na raiz do frontend quando for integrar com a API:
+
+```env
+VITE_API_URL=http://localhost:3333
+VITE_USE_API=true
+```
+
+### Observação importante
+
+O frontend ainda não foi totalmente migrado para consumir a API em todas as telas. Esta entrega já deixa o backend pronto e adiciona a base de configuração (`src/app/config/env.ts` e `src/app/services/api.ts`) para a próxima etapa da integração.

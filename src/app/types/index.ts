@@ -28,20 +28,23 @@ export interface Subcategory {
 
 export interface Product {
   id: string;
-  productId: string; // ID para WhatsApp
+  productId: string;
   name: string;
+  slug?: string;
   price: number;
   categoryId: string;
   subcategoryId: string;
   images: string[];
   sizes: string[];
   model: ProductModel;
-  season: string; // Ex: "2024/2025", "2026"
+  season: string;
   quality: ProductQuality;
-  gender: ProductGender; // Feminina, Masculina ou Infantil
+  gender: ProductGender;
   material: string;
   status: ProductStatus;
   description?: string;
+  personalizationType?: PersonalizationType;
+  featured?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

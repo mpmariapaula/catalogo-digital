@@ -12,10 +12,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 
 export function Subcategories() {
-  const { subcategories, categories, addSubcategory, updateSubcategory, deleteSubcategory } = useData();
+  const { subcategories, categories, addSubcategory, updateSubcategory, deleteSubcategory, isLoading } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
   const [deletingSubcategory, setDeletingSubcategory] = useState<Subcategory | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ categoryId: '', name: '', slug: '', description: '', image: '', order: '' });
 
   const handleOpenDialog = (subcategory?: Subcategory) => {
@@ -36,7 +37,7 @@ export function Subcategories() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.categoryId || !formData.name.trim() || !formData.slug.trim()) {
       toast.error('Categoria, nome e slug são obrigatórios');
@@ -49,30 +50,39 @@ export function Subcategories() {
       slug: formData.slug.trim().toLowerCase(),
       description: formData.description.trim(),
       image: formData.image.trim(),
-      order: parseInt(formData.order) || 0
+      order: parseInt(formData.order, 10) || 0
     };
 
-    if (editingSubcategory) {
-      updateSubcategory(editingSubcategory.id, subcategoryData);
-      toast.success('Subcategoria atualizada!');
-    } else {
-      addSubcategory(subcategoryData);
-      toast.success('Subcategoria criada!');
+    setIsSubmitting(true);
+    try {
+      if (editingSubcategory) {
+        await updateSubcategory(editingSubcategory.id, subcategoryData);
+        toast.success('Subcategoria atualizada!');
+      } else {
+        await addSubcategory(subcategoryData);
+        toast.success('Subcategoria criada!');
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar a subcategoria.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDialogOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (deletingSubcategory) {
-      deleteSubcategory(deletingSubcategory.id);
+  const confirmDelete = async () => {
+    if (!deletingSubcategory) return;
+
+    try {
+      await deleteSubcategory(deletingSubcategory.id);
       toast.success('Subcategoria excluída!');
       setDeletingSubcategory(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível excluir a subcategoria.');
     }
   };
 
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(c => c.id === categoryId)?.name || '-';
-  };
+  const getCategoryName = (categoryId: string) => categories.find(c => c.id === categoryId)?.name || '-';
 
   return (
     <div className="space-y-6">
@@ -87,32 +97,36 @@ export function Subcategories() {
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {subcategories.sort((a, b) => a.order - b.order).map((subcategory) => (
-          <Card key={subcategory.id}>
-            <CardContent className="p-6">
-              {subcategory.image && (
-                <img src={subcategory.image} alt={subcategory.name} className="w-full h-32 object-cover rounded mb-3" />
-              )}
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="text-lg text-gray-900">{subcategory.name}</h3>
-                  <p className="text-xs text-gray-500">{getCategoryName(subcategory.categoryId)} / {subcategory.slug}</p>
+      {isLoading ? (
+        <div className="bg-white border rounded-lg p-10 text-center text-gray-500">Carregando subcategorias...</div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...subcategories].sort((a, b) => a.order - b.order).map((subcategory) => (
+            <Card key={subcategory.id}>
+              <CardContent className="p-6">
+                {subcategory.image && (
+                  <img src={subcategory.image} alt={subcategory.name} className="w-full h-32 object-cover rounded mb-3" />
+                )}
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-lg text-gray-900">{subcategory.name}</h3>
+                    <p className="text-xs text-gray-500">{getCategoryName(subcategory.categoryId)} / {subcategory.slug}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(subcategory)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeletingSubcategory(subcategory)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(subcategory)}>
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setDeletingSubcategory(subcategory)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              {subcategory.description && <p className="text-sm text-gray-600">{subcategory.description}</p>}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                {subcategory.description && <p className="text-sm text-gray-600">{subcategory.description}</p>}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -155,7 +169,7 @@ export function Subcategories() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90">Salvar</Button>
+              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90" disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : 'Salvar'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

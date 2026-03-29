@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { Product, ProductModel, ProductQuality, ProductStatus, ProductGender } from '../../types';
 import {
@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter
 } from '../ui/dialog';
 import { Button } from '../ui/button';
@@ -28,10 +29,8 @@ interface ProductDialogProps {
   product: Product | null;
 }
 
-export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
-  const { addProduct, updateProduct, categories, subcategories } = useData();
-  
-  const [formData, setFormData] = useState({
+function getEmptyFormData() {
+  return {
     productId: '',
     name: '',
     price: '',
@@ -46,50 +45,49 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
     material: '',
     status: 'available' as ProductStatus,
     description: ''
-  });
+  };
+}
+
+function getProductFormData(product: Product) {
+  return {
+    productId: product.productId ?? '',
+    name: product.name ?? '',
+    price: String(product.price ?? ''),
+    categoryId: product.categoryId ?? '',
+    subcategoryId: product.subcategoryId ?? '',
+    images: product.images?.length ? [...product.images] : [''],
+    sizes: product.sizes?.length ? product.sizes.join(', ') : '',
+    model: product.model ?? 'I',
+    season: product.season ?? '',
+    quality: product.quality ?? 'premium-aaa',
+    gender: product.gender ?? 'masculina',
+    material: product.material ?? '',
+    status: product.status ?? 'available',
+    description: product.description ?? ''
+  };
+}
+
+export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
+  const { addProduct, updateProduct, categories, subcategories } = useData();
+  const [formData, setFormData] = useState(getEmptyFormData());
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (product) {
-      setFormData({
-        productId: product.productId,
-        name: product.name,
-        price: product.price.toString(),
-        categoryId: product.categoryId,
-        subcategoryId: product.subcategoryId,
-        images: product.images,
-        sizes: product.sizes.join(', '),
-        model: product.model,
-        season: product.season,
-        quality: product.quality,
-        gender: product.gender,
-        material: product.material,
-        status: product.status,
-        description: product.description || ''
-      });
+    if (product?.id) {
+      setFormData(getProductFormData(product));
     } else {
-      setFormData({
-        productId: '',
-        name: '',
-        price: '',
-        categoryId: '',
-        subcategoryId: '',
-        images: [''],
-        sizes: '',
-        model: 'I',
-        season: '',
-        quality: 'premium-aaa',
-        gender: 'masculina',
-        material: '',
-        status: 'available',
-        description: ''
-      });
+      setFormData(getEmptyFormData());
     }
-  }, [product, open]);
+  }, [open, product]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const availableSubcategories = useMemo(
+    () => subcategories.filter((sub) => sub.categoryId === formData.categoryId),
+    [formData.categoryId, subcategories]
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validações
     if (!formData.productId.trim()) {
       toast.error('ID do produto é obrigatório');
       return;
@@ -110,7 +108,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       toast.error('Selecione uma subcategoria');
       return;
     }
-    if (formData.images.filter(img => img.trim()).length === 0) {
+    if (formData.images.filter((img) => img.trim()).length === 0) {
       toast.error('Adicione pelo menos uma imagem');
       return;
     }
@@ -125,8 +123,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       price: parseFloat(formData.price),
       categoryId: formData.categoryId,
       subcategoryId: formData.subcategoryId,
-      images: formData.images.filter(img => img.trim()),
-      sizes: formData.sizes.split(',').map(s => s.trim()).filter(s => s),
+      images: formData.images.filter((img) => img.trim()),
+      sizes: formData.sizes.split(',').map((size) => size.trim()).filter(Boolean),
       model: formData.model,
       season: formData.season.trim(),
       quality: formData.quality,
@@ -136,21 +134,27 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       description: formData.description.trim()
     };
 
-    if (product) {
-      updateProduct(product.id, productData);
-      toast.success('Produto atualizado com sucesso!');
-    } else {
-      addProduct(productData);
-      toast.success('Produto criado com sucesso!');
+    setIsSubmitting(true);
+    try {
+      if (product) {
+        await updateProduct(product.id, productData);
+        toast.success('Produto atualizado com sucesso!');
+      } else {
+        await addProduct(productData);
+        toast.success('Produto criado com sucesso!');
+      }
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o produto.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onOpenChange(false);
   };
 
   const handleImageChange = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData({ ...formData, images: newImages });
+    const nextImages = [...formData.images];
+    nextImages[index] = value;
+    setFormData({ ...formData, images: nextImages });
   };
 
   const addImageField = () => {
@@ -158,109 +162,67 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
   };
 
   const removeImageField = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] });
+    const nextImages = formData.images.filter((_, currentIndex) => currentIndex !== index);
+    setFormData({ ...formData, images: nextImages.length > 0 ? nextImages : [''] });
   };
-
-  const availableSubcategories = subcategories.filter(
-    sub => sub.categoryId === formData.categoryId
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{product ? 'Editar Produto' : 'Novo Produto'}</DialogTitle>
+          <DialogDescription className="sr-only">Preencha os dados do produto abaixo.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
-            {/* ID do Produto */}
             <div>
               <Label htmlFor="productId">ID do Produto *</Label>
-              <Input
-                id="productId"
-                value={formData.productId}
-                onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
-                placeholder="Ex: BRA-001"
-              />
+              <Input id="productId" value={formData.productId} onChange={(e) => setFormData({ ...formData, productId: e.target.value })} placeholder="Ex: BRA-001" />
               <p className="text-xs text-gray-500 mt-1">Para identificação no WhatsApp</p>
             </div>
 
-            {/* Nome */}
             <div>
               <Label htmlFor="name">Nome *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: Camisa Brasil 2026"
-              />
+              <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Camisa Brasil 2026" />
             </div>
 
-            {/* Preço */}
             <div>
               <Label htmlFor="price">Preço (R$) *</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="89.90"
-              />
+              <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} placeholder="89.90" />
             </div>
 
-            {/* Categoria */}
             <div>
               <Label htmlFor="category">Categoria *</Label>
-              <Select
-                value={formData.categoryId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, categoryId: value, subcategoryId: '' })
-                }
-              >
+              <Select value={formData.categoryId} onValueChange={(value) => setFormData({ ...formData, categoryId: value, subcategoryId: '' })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Subcategoria */}
             <div>
               <Label htmlFor="subcategory">Subcategoria *</Label>
-              <Select
-                value={formData.subcategoryId}
-                onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })}
-                disabled={!formData.categoryId}
-              >
+              <Select value={formData.subcategoryId} onValueChange={(value) => setFormData({ ...formData, subcategoryId: value })} disabled={!formData.categoryId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableSubcategories.map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </SelectItem>
+                    <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Modelo */}
             <div>
               <Label htmlFor="model">Modelo *</Label>
-              <Select
-                value={formData.model}
-                onValueChange={(value) => setFormData({ ...formData, model: value as ProductModel })}
-              >
+              <Select value={formData.model} onValueChange={(value) => setFormData({ ...formData, model: value as ProductModel })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -272,24 +234,14 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </Select>
             </div>
 
-            {/* Temporada */}
             <div>
               <Label htmlFor="season">Temporada *</Label>
-              <Input
-                id="season"
-                value={formData.season}
-                onChange={(e) => setFormData({ ...formData, season: e.target.value })}
-                placeholder="Ex: 2024/2025 ou 2026"
-              />
+              <Input id="season" value={formData.season} onChange={(e) => setFormData({ ...formData, season: e.target.value })} placeholder="Ex: 2024/2025 ou 2026" />
             </div>
 
-            {/* Qualidade */}
             <div>
               <Label htmlFor="quality">Qualidade *</Label>
-              <Select
-                value={formData.quality}
-                onValueChange={(value) => setFormData({ ...formData, quality: value as ProductQuality })}
-              >
+              <Select value={formData.quality} onValueChange={(value) => setFormData({ ...formData, quality: value as ProductQuality })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -301,13 +253,9 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </Select>
             </div>
 
-            {/* Gênero */}
             <div>
               <Label htmlFor="gender">Gênero *</Label>
-              <Select
-                value={formData.gender}
-                onValueChange={(value) => setFormData({ ...formData, gender: value as ProductGender })}
-              >
+              <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value as ProductGender })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -319,24 +267,14 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </Select>
             </div>
 
-            {/* Material */}
             <div>
               <Label htmlFor="material">Material *</Label>
-              <Input
-                id="material"
-                value={formData.material}
-                onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                placeholder="Ex: Dry-fit Premium"
-              />
+              <Input id="material" value={formData.material} onChange={(e) => setFormData({ ...formData, material: e.target.value })} placeholder="Ex: Dry-fit Premium" />
             </div>
 
-            {/* Status */}
             <div>
               <Label htmlFor="status">Status *</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}
-              >
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as ProductStatus })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -348,72 +286,42 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               </Select>
             </div>
 
-            {/* Tamanhos */}
             <div className="md:col-span-2">
               <Label htmlFor="sizes">Tamanhos Disponíveis *</Label>
-              <Input
-                id="sizes"
-                value={formData.sizes}
-                onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
-                placeholder="P, M, G, GG, XG"
-              />
+              <Input id="sizes" value={formData.sizes} onChange={(e) => setFormData({ ...formData, sizes: e.target.value })} placeholder="P, M, G, GG, XG" />
               <p className="text-xs text-gray-500 mt-1">Separe por vírgula</p>
             </div>
           </div>
 
-          {/* Imagens */}
           <div>
             <Label>Imagens (URLs) *</Label>
             <div className="space-y-2 mt-2">
               {formData.images.map((image, index) => (
                 <div key={index} className="flex gap-2">
-                  <Input
-                    value={image}
-                    onChange={(e) => handleImageChange(index, e.target.value)}
-                    placeholder="URL da imagem"
-                  />
+                  <Input value={image} onChange={(e) => handleImageChange(index, e.target.value)} placeholder="URL da imagem" />
                   {formData.images.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeImageField(index)}
-                    >
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeImageField(index)}>
                       <X className="w-4 h-4" />
                     </Button>
                   )}
                 </div>
               ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addImageField}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={addImageField}>
                 <Plus className="w-4 h-4 mr-2" />
                 Adicionar Imagem
               </Button>
             </div>
           </div>
 
-          {/* Descrição */}
           <div>
             <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descrição detalhada do produto..."
-              rows={3}
-            />
+            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Descrição detalhada do produto..." rows={3} />
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90">
-              {product ? 'Atualizar' : 'Criar'} Produto
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90" disabled={isSubmitting}>
+              {isSubmitting ? 'Salvando...' : product ? 'Atualizar Produto' : 'Criar Produto'}
             </Button>
           </DialogFooter>
         </form>

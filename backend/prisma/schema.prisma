@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductStatus {
+  AVAILABLE
+  ON_ORDER
+  SOLD_OUT
+}
+
+enum ProductModel {
+  I
+  II
+  III
+}
+
+enum ProductQuality {
+  PREMIUM_AAA
+  THAI
+  STANDARD
+}
+
+enum ProductGender {
+  MASCULINA
+  FEMININA
+  INFANTIL
+}
+
+enum PersonalizationType {
+  NONE
+  NAME
+  NUMBER
+  BOTH
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String?
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  subcategories Subcategory[]
+  products      Product[]
+}
+
+model Subcategory {
+  id          String    @id @default(cuid())
+  categoryId  String
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  @@index([categoryId])
+}
+
+model Product {
+  id                  String               @id @default(cuid())
+  productId           String               @unique
+  name                String
+  slug                String               @unique
+  description         String?
+  price               Decimal              @db.Decimal(10, 2)
+  categoryId          String
+  subcategoryId       String
+  sizes               String[]
+  model               ProductModel
+  season              String
+  quality             ProductQuality
+  gender              ProductGender
+  material            String
+  status              ProductStatus
+  personalizationType PersonalizationType  @default(NONE)
+  featured            Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  category            Category             @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory         Subcategory          @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+  images              ProductImage[]
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  publicId  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?
+  image     String
+  link      String?
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -9,19 +9,34 @@ import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Login() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (login(password)) {
-      toast.success('Login realizado com sucesso!');
-      navigate('/admin');
-    } else {
-      toast.error('Senha incorreta!');
+
+    if (!email.trim() || !password.trim()) {
+      toast.error('Informe e-mail e senha.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await login(email.trim(), password);
+
+      if (success) {
+        toast.success('Login realizado com sucesso!');
+        navigate('/admin');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível entrar.');
       setPassword('');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -33,10 +48,22 @@ export function Login() {
             <Lock className="w-8 h-8 text-white" />
           </div>
           <CardTitle>Painel Administrativo</CardTitle>
-          <CardDescription>Entre com sua senha para acessar</CardDescription>
+          <CardDescription>Entre com seu e-mail e senha para acessar</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@catalogo.com"
+                className="mt-1"
+                autoFocus
+              />
+            </div>
             <div>
               <Label htmlFor="password">Senha</Label>
               <Input
@@ -46,14 +73,17 @@ export function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Digite sua senha"
                 className="mt-1"
-                autoFocus
               />
             </div>
-            <Button type="submit" className="w-full bg-[#0D0678] hover:bg-[#0D0678]/90">
-              Entrar
+            <Button
+              type="submit"
+              className="w-full bg-[#0D0678] hover:bg-[#0D0678]/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </Button>
             <p className="text-xs text-center text-gray-500 mt-4">
-              Esqueci minha senha? Entre em contato via WhatsApp para recuperar o acesso.
+              Use as credenciais configuradas no backend para acessar o painel.
             </p>
           </form>
         </CardContent>

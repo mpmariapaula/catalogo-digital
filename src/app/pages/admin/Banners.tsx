@@ -12,10 +12,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from 'sonner';
 
 export function Banners() {
-  const { banners, addBanner, updateBanner, deleteBanner } = useData();
+  const { banners, addBanner, updateBanner, deleteBanner, isLoading } = useData();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [deletingBanner, setDeletingBanner] = useState<Banner | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ title: '', subtitle: '', image: '', link: '', active: true, order: '' });
 
   const handleOpenDialog = (banner?: Banner) => {
@@ -36,7 +37,7 @@ export function Banners() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.image.trim()) {
       toast.error('Título e imagem são obrigatórios');
@@ -49,24 +50,35 @@ export function Banners() {
       image: formData.image.trim(),
       link: formData.link.trim(),
       active: formData.active,
-      order: parseInt(formData.order) || 0
+      order: parseInt(formData.order, 10) || 0
     };
 
-    if (editingBanner) {
-      updateBanner(editingBanner.id, bannerData);
-      toast.success('Banner atualizado!');
-    } else {
-      addBanner(bannerData);
-      toast.success('Banner criado!');
+    setIsSubmitting(true);
+    try {
+      if (editingBanner) {
+        await updateBanner(editingBanner.id, bannerData);
+        toast.success('Banner atualizado!');
+      } else {
+        await addBanner(bannerData);
+        toast.success('Banner criado!');
+      }
+      setIsDialogOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o banner.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDialogOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (deletingBanner) {
-      deleteBanner(deletingBanner.id);
+  const confirmDelete = async () => {
+    if (!deletingBanner) return;
+
+    try {
+      await deleteBanner(deletingBanner.id);
       toast.success('Banner excluído!');
       setDeletingBanner(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível excluir o banner.');
     }
   };
 
@@ -83,39 +95,43 @@ export function Banners() {
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {banners.sort((a, b) => a.order - b.order).map((banner) => (
-          <Card key={banner.id}>
-            <CardContent className="p-0">
-              <div className="relative">
-                <img src={banner.image} alt={banner.title} className="w-full h-48 object-cover rounded-t-lg" />
-                {!banner.active && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-t-lg">
-                    <span className="bg-gray-800 text-white px-3 py-1 rounded text-sm">Inativo</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="text-lg text-gray-900">{banner.title}</h3>
-                    {banner.subtitle && <p className="text-sm text-gray-600">{banner.subtitle}</p>}
-                    {banner.link && <p className="text-xs text-gray-500 mt-1">{banner.link}</p>}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(banner)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeletingBanner(banner)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+      {isLoading ? (
+        <div className="bg-white border rounded-lg p-10 text-center text-gray-500">Carregando banners...</div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {[...banners].sort((a, b) => a.order - b.order).map((banner) => (
+            <Card key={banner.id}>
+              <CardContent className="p-0">
+                <div className="relative">
+                  <img src={banner.image} alt={banner.title} className="w-full h-48 object-cover rounded-t-lg" />
+                  {!banner.active && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-t-lg">
+                      <span className="bg-gray-800 text-white px-3 py-1 rounded text-sm">Inativo</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-lg text-gray-900">{banner.title}</h3>
+                      {banner.subtitle && <p className="text-sm text-gray-600">{banner.subtitle}</p>}
+                      {banner.link && <p className="text-xs text-gray-500 mt-1">{banner.link}</p>}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(banner)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeletingBanner(banner)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -149,7 +165,7 @@ export function Banners() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90">Salvar</Button>
+              <Button type="submit" className="bg-[#0D0678] hover:bg-[#0D0678]/90" disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : 'Salvar'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
