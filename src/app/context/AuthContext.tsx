@@ -9,7 +9,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Senha simples - em produção, usar backend real
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = 'Velozes20!';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

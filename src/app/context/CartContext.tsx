@@ -48,9 +48,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let itemPrice = item.product.price;
     // Adicionar custo de personalização
     if (item.personalization === 'name' || item.personalization === 'number') {
-      itemPrice += 15;
+      itemPrice += 30;
     } else if (item.personalization === 'both') {
-      itemPrice += 25;
+      itemPrice += 30;
     }
     return sum + itemPrice * item.quantity;
   }, 0);

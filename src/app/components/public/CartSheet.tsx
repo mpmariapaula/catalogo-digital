@@ -16,7 +16,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   const handleCheckout = () => {
     if (items.length === 0) return;
 
-    let message = '🛒 *Novo Pedido - Jersey Store*\n\n';
+    let message = '*Novo Pedido - Bebezão Store*\n\n';
     
     items.forEach((item, index) => {
       message += `${index + 1}. ${item.product.name}\n`;
@@ -36,15 +36,15 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
       }
       
       const itemPrice = item.product.price + 
-        (item.personalization === 'both' ? 25 : 
-         item.personalization !== 'none' ? 15 : 0);
+        (item.personalization === 'both' ? 30 : 
+         item.personalization !== 'none' ? 30 : 0);
       message += `   Subtotal: R$ ${(itemPrice * item.quantity).toFixed(2).replace('.', ',')}\n\n`;
     });
 
     message += `💰 *Total: R$ ${totalPrice.toFixed(2).replace('.', ',')}*`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappNumber = '5511999999999'; // ALTERAR PARA O NÚMERO DA LOJA
+    const whatsappNumber = '5584991859918'; // ALTERAR PARA O NÚMERO DA LOJA
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
     window.open(whatsappUrl, '_blank');
@@ -55,16 +55,16 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   const getItemPrice = (item: typeof items[0]) => {
     let price = item.product.price;
     if (item.personalization === 'both') {
-      price += 25;
+      price += 30;
     } else if (item.personalization !== 'none') {
-      price += 15;
+      price += 30;
     }
     return price;
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
+      <SheetContent className="w-full sm:max-w-lg flex flex-col h-screen">
         <SheetHeader>
           <SheetTitle>Carrinho de Compras</SheetTitle>
         </SheetHeader>
@@ -75,7 +75,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 -mx-6 px-6">
+            <ScrollArea className="flex-1 overflow-y-auto flex-1 -mx-6 px-6">
               <div className="space-y-4 py-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg">

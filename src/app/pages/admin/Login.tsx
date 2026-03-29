@@ -53,7 +53,7 @@ export function Login() {
               Entrar
             </Button>
             <p className="text-xs text-center text-gray-500 mt-4">
-              Senha padrão: admin123
+              Esqueci minha senha? Entre em contato via WhatsApp para recuperar o acesso.
             </p>
           </form>
         </CardContent>

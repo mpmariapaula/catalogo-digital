@@ -21,11 +21,15 @@ export function Header() {
           <div className="border-b border-gray-100 py-2 hidden md:block">
             <div className="flex justify-between items-center text-xs text-gray-600">
               <div className="flex items-center gap-6">
-                <span>📦 Frete Grátis acima de R$ 299</span>
-                <span>⚡ Entrega Rápida</span>
+                <span>📦 Frete Grátis acima de R$ 169,90</span>
+                {/* <span>⚡ Entrega Rápida</span> */}
               </div>
               <div className="flex items-center gap-4">
-                <span>💬 WhatsApp: (11) 99999-9999</span>
+                <span>
+                  <a href="https://wa.me/5584991859918" target="_blank" rel="noopener noreferrer">
+                  💬 WhatsApp: (84) 99185-9918
+                  </a>
+                </span>
               </div>
             </div>
           </div>
@@ -33,14 +37,14 @@ export function Header() {
           <div className="flex items-center justify-between h-24 md:h-28">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-4 group">
-              <div className="w-14 h-14 md:w-16 md:h-16 transition-transform group-hover:scale-105">
+              <div className="w-22 h-18 md:w-32 md:h-28 transition-transform group-hover:scale-105">
                 <Logo />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl tracking-tight bg-gradient-to-r from-[#0D0678] to-[#1a0f9e] bg-clip-text text-transparent">
-                  Jersey Store
+                  Bebezão Store
                 </h1>
-                <p className="text-xs md:text-sm text-gray-500 tracking-wide">RÉPLICAS PREMIUM</p>
+                <p className="text-xs md:text-sm text-gray-500 tracking-wide">CAMISAS DE FUTEBOL</p>
               </div>
             </Link>
 

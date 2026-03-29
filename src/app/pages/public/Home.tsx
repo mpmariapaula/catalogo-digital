@@ -119,7 +119,7 @@ export function PublicHome() {
       {/* Features */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -131,11 +131,11 @@ export function PublicHome() {
               </div>
               <h4 className="text-xl text-gray-900 mb-3">Qualidade Premium</h4>
               <p className="text-gray-600">
-                Réplicas AAA com materiais de primeira linha e acabamento impecável
+                Réplicas Thai 1.1 com materiais de primeira linha e acabamento impecável
               </p>
             </motion.div>
 
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -149,7 +149,7 @@ export function PublicHome() {
               <p className="text-gray-600">
                 Enviamos para todo o Brasil com agilidade e segurança
               </p>
-            </motion.div>
+            </motion.div> */}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

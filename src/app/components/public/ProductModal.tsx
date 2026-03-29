@@ -81,8 +81,8 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
   };
 
   const getPersonalizationPrice = () => {
-    if (personalization === 'name' || personalization === 'number') return 15;
-    if (personalization === 'both') return 25;
+    if (personalization === 'name' || personalization === 'number') return 30;
+    if (personalization === 'both') return 30;
     return 0;
   };
 
@@ -258,7 +258,7 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
                     <RadioGroupItem value="name" id="name" />
                     <div className="flex-1">
                       <span className="text-sm font-medium">Nome</span>
-                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 15,00</span>
+                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 30,00</span>
                     </div>
                   </label>
                   <label
@@ -272,7 +272,7 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
                     <RadioGroupItem value="number" id="number" />
                     <div className="flex-1">
                       <span className="text-sm font-medium">Número</span>
-                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 15,00</span>
+                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 30,00</span>
                     </div>
                   </label>
                   <label
@@ -286,7 +286,7 @@ export function ProductModal({ product, open, onOpenChange }: ProductModalProps)
                     <RadioGroupItem value="both" id="both" />
                     <div className="flex-1">
                       <span className="text-sm font-medium">Nome e Número</span>
-                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 25,00</span>
+                      <span className="text-[#0D0678] ml-2 text-xs font-semibold">+R$ 30,00</span>
                     </div>
                   </label>
                 </div>

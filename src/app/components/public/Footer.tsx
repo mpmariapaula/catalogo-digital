@@ -16,12 +16,12 @@ export function Footer() {
                 <Shirt className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg">Jersey Store</h3>
-                <p className="text-xs text-gray-400">Réplicas Premium</p>
+                <h3 className="text-lg">Bebezão Store</h3>
+                <p className="text-xs text-gray-400">CAMISAS DE FUTEBOL</p>
               </div>
             </div>
             <p className="text-sm text-gray-400">
-              As melhores réplicas de camisas de futebol com qualidade garantida e entrega rápida.
+              As melhores réplicas de camisas de futebol com qualidade garantida.
             </p>
           </div>
 
@@ -48,9 +48,8 @@ export function Footer() {
           <div>
             <h4 className="text-sm mb-4">Informações</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Qualidade Premium AAA e Thai</li>
+              <li>Camisas Thai 1.1</li>
               <li>Personalização disponível</li>
-              <li>Entrega para todo Brasil</li>
               <li>Pagamento via WhatsApp</li>
             </ul>
           </div>
@@ -60,19 +59,7 @@ export function Footer() {
             <h4 className="text-sm mb-4">Redes Sociais</h4>
             <div className="flex gap-3">
               <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-[#0D0678] flex items-center justify-center transition-colors"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-[#0D0678] flex items-center justify-center transition-colors"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
+                href="https://wa.me/5584991859918?text=Quero%20mais%20informa%C3%A7%C3%B5es%20de%20camisas%20de%20Futebol"
                 className="w-10 h-10 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
               >
                 <MessageCircle className="w-5 h-5" />
@@ -82,7 +69,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Jersey Store. Todos os direitos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} Bebezão Store. Todos os direitos reservados.</p>
           <p className="mt-2 text-xs">
             Este site vende réplicas de camisas de futebol. Não somos afiliados às marcas originais.
           </p>
